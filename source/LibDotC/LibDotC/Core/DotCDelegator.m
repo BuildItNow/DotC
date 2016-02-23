@@ -107,6 +107,9 @@ static NSString* objectToString(id subject)
     DotCDelegatorID _delegatorID;
     id          _subject;
     SEL         _selector;
+
+    DotCDelegatorBlock _oriBlock;   // For DelegatorID, must store the copy of block
+    DotCDelegatorBlock _block;
     id          _userData;
     bool        _userDataIsStrong;
 }
@@ -137,6 +140,15 @@ static NSString* objectToString(id subject)
     {
         [_userData release];
     }
+    
+    _userData = nil;
+    
+    _oriBlock = nil;
+    [_block release];
+    _block = nil;
+    
+    _subject  = nil;
+    _selector = nil;
     [super dealloc];
 }
 
@@ -145,63 +157,51 @@ static NSString* objectToString(id subject)
     return _subject;
 }
 
+- (void) setSubject:(id)subject
+{
+    _subject = subject;
+}
+
 - (SEL) selector
 {
     return _selector;
 }
 
-- (void) setSubject:(id) subject selector:(SEL) selector
+- (void) setSelector:(SEL)selector
 {
-    assert(!_subject);
-    assert(!_selector);
-    
-    _subject  = subject;
     _selector = selector;
-    
-    _delegatorID = nil;
 }
 
-- (void) setSubject:(id) subject selector:(SEL) selector strongUserData:(id)userData
+- (DotCDelegatorBlock) block
 {
-    assert(!_subject);
-    assert(!_selector);
-    
-    _subject  = subject;
-    _selector = selector;
-    
-    assert(userData);
-    if(_userDataIsStrong)
-    {
-        [_userData release];
-    }
-    _userData = userData;
-    [_userData retain];
-    _userDataIsStrong = TRUE;
-    
-    _delegatorID = nil;
+    return _block;
 }
 
-- (void) setSubject:(id) subject selector:(SEL) selector weakUserData:(id)userData
+- (void) setBlock:(DotCDelegatorBlock)block
 {
-    assert(!_subject);
-    assert(!_selector);
-    
-    _subject  = subject;
-    _selector = selector;
-    
-    assert(userData);
+    assert(_block == nil);
+    _oriBlock = block;
+    _block = [block copy];
+}
+
+- (void) setUserData:(id)userData strong:(bool)strong
+{
+    assert(_userData == nil);
+    _userData = userData;
+    _userDataIsStrong = strong;
     if(_userDataIsStrong)
     {
-        [_userData release];
+        [_userData retain];
     }
-    _userData = userData;
-    _userDataIsStrong = FALSE;
-    
-    _delegatorID = nil;
 }
 
 - (id) perform:(DotCDelegatorArguments*) arguments
 {
+    if(_block)
+    {
+        return _block(self.delegatorID, self.subject, arguments);
+    }
+    
     if(![DotCDelegator checkDelegatorValidity:_subject selector:_selector])
     {
         NSLog(@"[%@] DotCDelegator %@ selector signature is error. See DelegatorManager description.", LIB_TAG, [self delegatorID]);
@@ -238,14 +238,28 @@ static NSString* objectToString(id subject)
     return ret;
 }
 
-+ (DotCDelegatorID) generateDelegatorID:(id) subject selector:(SEL) selector
-{
-    return [NSString stringWithFormat:@"%@#%@", objectToString(subject), NSStringFromSelector(selector)];
-}
-
 + (DotCDelegatorID) generateDelegatorID:(id) subject selector:(SEL) selector userData:(id)userData
 {
-    return [NSString stringWithFormat:@"%@#%@#%@", objectToString(subject), NSStringFromSelector(selector), objectToString(userData)];
+    if(userData == nil)
+    {
+        return [NSString stringWithFormat:@"%@#%@", objectToString(subject), NSStringFromSelector(selector)];
+    }
+    else
+    {
+        return [NSString stringWithFormat:@"%@#%@#%@", objectToString(subject), NSStringFromSelector(selector), objectToString(userData)];
+    }
+}
+
++ (DotCDelegatorID) generateDelegatorID:(id) subject block:(DotCDelegatorBlock) block userData:(id)userData
+{
+    if(userData == nil)
+    {
+        return [NSString stringWithFormat:@"%@#%p", objectToString(subject), block];
+    }
+    else
+    {
+        return [NSString stringWithFormat:@"%@#%p#%@", objectToString(subject), block, objectToString(userData)];
+    }
 }
 
 + (BOOL) checkDelegatorValidity:(id) subject selector:(SEL) selector
@@ -260,17 +274,27 @@ static NSString* objectToString(id subject)
 
 - (DotCDelegatorID) delegatorID
 {
-    if (_subject == nil || _selector == nil)
+    if(_block)
     {
-        return INVALID_DELEGATOR;
+        if(!_delegatorID)
+        {
+            _delegatorID = [DotCDelegator generateDelegatorID:_subject block:_oriBlock userData:_userData];
+            [_delegatorID retain];
+        }
+        
+        return _delegatorID;
+    }
+    else if(_subject && _selector)
+    {
+        if (!_delegatorID)
+        {
+            _delegatorID = [DotCDelegator generateDelegatorID:_subject selector:_selector userData:_userData];
+            [_delegatorID retain];
+        }
+        
+        return _delegatorID;
     }
     
-    if (!_delegatorID)
-    {
-        _delegatorID = _userData ? [DotCDelegator generateDelegatorID:_subject selector:_selector] : [DotCDelegator generateDelegatorID:_subject selector:_selector userData:_userData];
-        [_delegatorID retain];
-    }
-    
-    return _delegatorID;
+    return INVALID_DELEGATOR;
 }
 @end

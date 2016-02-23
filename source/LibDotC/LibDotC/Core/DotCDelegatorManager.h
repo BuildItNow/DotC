@@ -17,6 +17,27 @@
 - (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector;
 - (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector weakUserData:(id)userData;
 - (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector strongUserData:(id)userData;
+
+- (DotCDelegatorID) addDelegator:(id) subject block:(DotCDelegatorBlock)block;
+- (DotCDelegatorID) addDelegator:(id) subject block:(DotCDelegatorBlock)block weakUserData:(id)userData;
+- (DotCDelegatorID) addDelegator:(id) subject block:(DotCDelegatorBlock)block strongUserData:(id)userData;
+
+- (DotCDelegatorID) addDelegator:(DotCDelegatorBlock)block;
+- (DotCDelegatorID) addDelegator:(DotCDelegatorBlock)block weakUserData:(id)userData;
+- (DotCDelegatorID) addDelegator:(DotCDelegatorBlock)block strongUserData:(id)userData;
+
+- (DotCDelegatorID) onceDelegator:(id) subject selector:(SEL) selector;
+- (DotCDelegatorID) onceDelegator:(id) subject selector:(SEL) selector weakUserData:(id)userData;
+- (DotCDelegatorID) onceDelegator:(id) subject selector:(SEL) selector strongUserData:(id)userData;
+
+- (DotCDelegatorID) onceDelegator:(id) subject block:(DotCDelegatorBlock)block;
+- (DotCDelegatorID) onceDelegator:(id) subject block:(DotCDelegatorBlock)block weakUserData:(id)userData;
+- (DotCDelegatorID) onceDelegator:(id) subject block:(DotCDelegatorBlock)block strongUserData:(id)userData;
+
+- (DotCDelegatorID) onceDelegator:(DotCDelegatorBlock)block;
+- (DotCDelegatorID) onceDelegator:(DotCDelegatorBlock)block weakUserData:(id)userData;
+- (DotCDelegatorID) onceDelegator:(DotCDelegatorBlock)block strongUserData:(id)userData;
+
 - (void) removeDelegators:(id) subject;
 - (void) removeDelegator:(DotCDelegatorID) delegatorID;
 - (id) performDelegator:(DotCDelegatorID) delegatorID arguments:(DotCDelegatorArguments*) arguments;
@@ -32,6 +53,9 @@
 - (DotCDelegatorID) genDelegatorID:(SEL)selector;\
 - (DotCDelegatorID) genDelegatorID:(SEL)selector weakData:(id)data;\
 - (DotCDelegatorID) genDelegatorID:(SEL)selector strongData:(id)data;\
+- (DotCDelegatorID) genBlockID:(DotCDelegatorBlock)block;\
+- (DotCDelegatorID) genBlockID:(DotCDelegatorBlock)block weakData:(id)data;\
+- (DotCDelegatorID) genBlockID:(DotCDelegatorBlock)block strongData:(id)data;\
 @end
 
 #define DOTC_IMPL_DELEGATOR_FEATURE_CLASS(clsName, superClsName)\
@@ -55,5 +79,19 @@ return [DOTC_GLOBAL_DELEGATOR_MANAGER addDelegator:self selector:selector weakUs
 - (DotCDelegatorID) genDelegatorID:(SEL)selector strongData:(id)data\
 {\
 return [DOTC_GLOBAL_DELEGATOR_MANAGER addDelegator:self selector:selector strongUserData:data];\
+}\
+- (DotCDelegatorID) genBlockID:(DotCDelegatorBlock)block\
+{\
+return [DOTC_GLOBAL_DELEGATOR_MANAGER addDelegator:self block:block];\
+}\
+\
+- (DotCDelegatorID) genBlockID:(DotCDelegatorBlock)block weakData:(id)data\
+{\
+return [DOTC_GLOBAL_DELEGATOR_MANAGER addDelegator:self block:block weakUserData:data];\
+}\
+\
+- (DotCDelegatorID) genBlockID:(DotCDelegatorBlock)block strongData:(id)data\
+{\
+return [DOTC_GLOBAL_DELEGATOR_MANAGER addDelegator:self block:block strongUserData:data];\
 }\
 @end

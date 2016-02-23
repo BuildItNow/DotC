@@ -14,10 +14,46 @@ static NSString* subjectToString(id subject)
     return [NSString stringWithFormat:@"%p#%s", (void*)subject, object_getClassName(subject)];
 }
 
+@interface OnceSupportDelegator : DotCDelegator
+{
+    DotCDelegatorID       _onceDelegatorID;
+}
+
+@end
+
+@implementation OnceSupportDelegator
+
+- (void) dealloc
+{
+    [_onceDelegatorID release];
+    _onceDelegatorID = nil;
+    
+    [super dealloc];
+}
+
+- (bool) once
+{
+    return _onceDelegatorID != nil;
+}
+
+- (DotCDelegatorID) delegatorID
+{
+    return _onceDelegatorID ? _onceDelegatorID : [super delegatorID];
+}
+
+- (void) setOnceDelegatorID : (DotCDelegatorID) onceDelegatorID
+{
+    _onceDelegatorID = [onceDelegatorID copy];
+}
+
+@end
+
 @interface DotCDelegatorManager()
 {
-    NSMutableDictionary*    _subject2Delegators;
-    NSMutableDictionary*    _id2Delegators;
+    NSMutableDictionary*     _subject2Delegators;
+    NSMutableDictionary*     _id2Delegators;
+    uint                     _nextOnceID;
+    DotCDelegatorArguments*  _sharedArguments;
 }
 
 @end
@@ -33,6 +69,8 @@ static NSString* subjectToString(id subject)
     
     _subject2Delegators = STRONG_OBJECT(NSMutableDictionary, init);
     _id2Delegators      = STRONG_OBJECT(NSMutableDictionary, init);
+    _nextOnceID         = 1;
+    _sharedArguments    = STRONG_OBJECT(DotCDelegatorArguments, init);
     
     return self;
     
@@ -40,6 +78,7 @@ static NSString* subjectToString(id subject)
 
 - (void) dealloc
 {
+    [_sharedArguments release];
     [_subject2Delegators release];
     [_id2Delegators release];
     
@@ -61,70 +100,136 @@ static NSString* subjectToString(id subject)
     return ret;
 }
 
-- (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector
+- (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector block:(DotCDelegatorBlock) block userdata:(id)userData strong:(bool)userDataIsStrong once:(bool)once
 {
-    DotCDelegatorID delegatorID = [DotCDelegator generateDelegatorID:subject selector:selector];
     
-    if([_id2Delegators objectForKey:delegatorID])
+    DotCDelegatorID delegatorID = nil;
+    if(once)
+    {
+        delegatorID = [NSString stringWithFormat:@"once#%d", _nextOnceID];
+        ++_nextOnceID;
+    }
+    else if(block)
+    {
+        delegatorID = [DotCDelegator generateDelegatorID:subject block:block userData:userData];
+    }
+    else if(selector && subject)
+    {
+        delegatorID = [DotCDelegator generateDelegatorID:subject selector:selector userData:userData];
+    }
+    else
+    {
+        return INVALID_DELEGATOR;
+    }
+    
+    if(!once && [_id2Delegators objectForKey:delegatorID])
     {
         return delegatorID;
     }
     
-    DotCDelegator* delegator = WEAK_OBJECT(DotCDelegator, init);
-    [delegator setSubject:subject selector:selector];
+    OnceSupportDelegator* delegator = WEAK_OBJECT(OnceSupportDelegator, init);
+    
+    delegator.subject  = subject;
+    delegator.selector = selector;
+    delegator.block    = block;
+    [delegator setUserData:userData strong:userDataIsStrong];
+    
+    if(once)
+    {
+        delegator.onceDelegatorID = delegatorID;
+    }
+    
     
     // add to _subject2Delegators
-    NSMutableDictionary* delegators = [self subjectDelegators:subject create:TRUE];
-    [delegators setObject:delegator forKey:delegatorID];
+    if(subject)
+    {
+        NSMutableDictionary* delegators = [self subjectDelegators:subject create:TRUE];
+        [delegators setObject:delegator forKey:delegatorID];
+    }
     
     // add to _id2Delegators
     [_id2Delegators setObject:delegator forKey:delegatorID];
     
+    NSLog(@"\n%@\n%@", delegatorID, delegator.delegatorID);
+    
     return delegatorID;
+}
+
+- (DotCDelegatorID) addDelegator:(id) subject block:(DotCDelegatorBlock)block
+{
+    return [self addDelegator:subject selector:nil block:block userdata:nil strong:false once:false];
+}
+
+- (DotCDelegatorID) addDelegator:(id) subject block:(DotCDelegatorBlock)block weakUserData:(id)userData
+{
+    return [self addDelegator:subject selector:nil block:block userdata:userData strong:false once:false];
+}
+
+- (DotCDelegatorID) addDelegator:(id) subject block:(DotCDelegatorBlock)block strongUserData:(id)userData
+{
+    return [self addDelegator:subject selector:nil block:block userdata:userData strong:true once:false];
+}
+
+
+- (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector
+{
+    return [self addDelegator:subject selector:selector block:nil userdata:nil strong:false once:false];
 }
 
 - (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector weakUserData:(id)userData
 {
-    DotCDelegatorID delegatorID = [DotCDelegator generateDelegatorID:subject selector:selector userData:userData];
-    
-    if([_id2Delegators objectForKey:delegatorID])
-    {
-        return delegatorID;
-    }
-    
-    DotCDelegator* delegator = WEAK_OBJECT(DotCDelegator, init);
-    [delegator setSubject:subject selector:selector weakUserData:userData];
-    
-    // add to _subject2Delegators
-    NSMutableDictionary* delegators = [self subjectDelegators:subject create:TRUE];
-    [delegators setObject:delegator forKey:delegatorID];
-    
-    // add to _id2Delegators
-    [_id2Delegators setObject:delegator forKey:delegatorID];
-    
-    return delegatorID;
+    return [self addDelegator:subject selector:selector block:nil userdata:userData strong:false once:false];
 }
 
 - (DotCDelegatorID) addDelegator:(id) subject selector:(SEL) selector strongUserData:(id)userData
 {
-    DotCDelegatorID delegatorID = [DotCDelegator generateDelegatorID:subject selector:selector userData:userData];
-    
-    if([_id2Delegators objectForKey:delegatorID])
-    {
-        return delegatorID;
-    }
-    
-    DotCDelegator* delegator = WEAK_OBJECT(DotCDelegator, init);
-    [delegator setSubject:subject selector:selector strongUserData:userData];
-    
-    // add to _subject2Delegators
-    NSMutableDictionary* delegators = [self subjectDelegators:subject create:TRUE];
-    [delegators setObject:delegator forKey:delegatorID];
-    
-    // add to _id2Delegators
-    [_id2Delegators setObject:delegator forKey:delegatorID];
-    
-    return delegatorID;
+    return [self addDelegator:subject selector:selector block:nil userdata:userData strong:true once:false];
+}
+
+- (DotCDelegatorID) onceDelegator:(id) subject selector:(SEL) selector
+{
+    return [self addDelegator:subject selector:selector block:nil userdata:nil strong:false once:true];
+}
+
+- (DotCDelegatorID) onceDelegator:(id) subject selector:(SEL) selector weakUserData:(id)userData
+{
+    return [self addDelegator:subject selector:selector block:nil userdata:userData strong:false once:true];
+}
+
+- (DotCDelegatorID) onceDelegator:(id) subject selector:(SEL) selector strongUserData:(id)userData
+{
+    return [self addDelegator:subject selector:selector block:nil userdata:userData strong:true once:true];
+}
+
+- (DotCDelegatorID) onceDelegator:(id) subject block:(DotCDelegatorBlock)block
+{
+    return [self addDelegator:subject selector:nil block:block userdata:nil strong:false once:true];
+}
+
+- (DotCDelegatorID) onceDelegator:(id) subject block:(DotCDelegatorBlock)block weakUserData:(id)userData
+{
+    return [self addDelegator:subject selector:nil block:block userdata:userData strong:false once:true];
+}
+
+- (DotCDelegatorID) onceDelegator:(id) subject block:(DotCDelegatorBlock)block strongUserData:(id)userData
+{
+    return [self addDelegator:subject selector:nil block:block userdata:userData strong:true once:true];
+}
+
+- (DotCDelegatorID) onceDelegator:(DotCDelegatorBlock)block
+{
+    return [self addDelegator:nil selector:nil block:block userdata:nil strong:false once:true];
+}
+
+- (DotCDelegatorID) onceDelegator:(DotCDelegatorBlock)block weakUserData:(id)userData
+{
+    return[self addDelegator:nil selector:nil block:block userdata:userData strong:false once:true];
+
+}
+
+- (DotCDelegatorID) onceDelegator:(DotCDelegatorBlock)block strongUserData:(id)userData
+{
+    return [self addDelegator:nil selector:nil block:block userdata:userData strong:true once:true];
 }
 
 - (void) removeDelegators:(id) subject
@@ -152,25 +257,35 @@ static NSString* subjectToString(id subject)
     [_id2Delegators removeObjectForKey:delegatorID];
     
     id subject  = delegator.subject;
-    NSMutableDictionary* delegators = [self subjectDelegators:subject create:FALSE];
-    assert(delegators);
-    [delegators removeObjectForKey:delegatorID];
-    
-    if([delegators count] == 0)
+    if(subject)
     {
-        [_subject2Delegators removeObjectForKey:subjectToString(subject)];
+        NSMutableDictionary* delegators = [self subjectDelegators:subject create:FALSE];
+        assert(delegators);
+        [delegators removeObjectForKey:delegatorID];
+        
+        if([delegators count] == 0)
+        {
+            [_subject2Delegators removeObjectForKey:subjectToString(subject)];
+        }
     }
 }
 
 - (id) performDelegator:(DotCDelegatorID) delegatorID arguments:(DotCDelegatorArguments*) arguments
 {
-    DotCDelegator* delegator = [_id2Delegators objectForKey:delegatorID];
+    OnceSupportDelegator* delegator = [_id2Delegators objectForKey:delegatorID];
     if(!delegator)
     {
         return nil;
     }
     
-    return [delegator perform:arguments];
+    id ret = [delegator perform:arguments ? arguments : _sharedArguments];
+    
+    if(delegator.once)
+    {
+        [self removeDelegator:delegatorID];
+    }
+    
+    return ret;
 }
 
 + (instancetype) globalDelegatorManager

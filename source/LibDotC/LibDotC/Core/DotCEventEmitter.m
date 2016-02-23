@@ -57,7 +57,8 @@ NSString*    EE_ARGUMENT_EVENT = @"EE_ARGUMENT_EVENT";
 + (instancetype) listenerFrom:(id)object selector:(SEL)selector
 {
     DotCDelegator* delegator = WEAK_OBJECT(DotCDelegator, init);
-    [delegator setSubject:object selector:selector];
+    delegator.subject  = object;
+    delegator.selector = selector;
     
     return WEAK_OBJECT(self, initWith:delegator);
 }

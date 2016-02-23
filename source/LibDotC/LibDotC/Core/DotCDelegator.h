@@ -28,20 +28,30 @@ extern NSString*   DELEGATOR_ARGUMENT_USERDATA;
 
 @end
 
+typedef id (^ DotCDelegatorBlock)(DotCDelegatorID, id, DotCDelegatorArguments*);
+#define DOTC_DELEGATOR_BLOCK ^ id (DotCDelegatorID delegatorID, id subject, DotCDelegatorArguments* arguments)
+
 @interface DotCDelegator : NSObject
 
 - (instancetype) init;
 - (void) dealloc;
+
 - (id) subject;
+- (void) setSubject:(id)subject;
+
 - (SEL) selector;
-- (void) setSubject:(id) subject selector:(SEL) selector;
-- (void) setSubject:(id) subject selector:(SEL) selector weakUserData:(id)userData;
-- (void) setSubject:(id) subject selector:(SEL) selector strongUserData:(id)userData;
+- (void) setSelector:(SEL)selector;
+
+- (DotCDelegatorBlock) block;
+- (void) setBlock:(DotCDelegatorBlock)block;
+
+- (void) setUserData:(id)userData strong:(bool)strong;
+
 - (id) perform:(DotCDelegatorArguments*) arguments;
 - (DotCDelegatorID) delegatorID;
 
-+ (DotCDelegatorID) generateDelegatorID:(id) subject selector:(SEL) selector;
 + (DotCDelegatorID) generateDelegatorID:(id) subject selector:(SEL) selector userData:(id)userData;
++ (DotCDelegatorID) generateDelegatorID:(id) subject block:(DotCDelegatorBlock) block userData:(id)userData;
 @end
 
 
