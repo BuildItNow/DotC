@@ -222,7 +222,7 @@
 
 @end
 
-@implementation WDictionaryWrapper
+@implementation DotCWDictionaryWrapper
 
 - (void) reset:(NSArray*)stack at:(int)index key:(NSString*)key value:(id)value
 {
@@ -238,9 +238,9 @@
     NSString* parentKey = [stack[index] key];
     @try
     {
-        if([parent isKindOfClass:[WDictionaryWrapper class]])
+        if([parent isKindOfClass:[DotCWDictionaryWrapper class]])
         {
-            [(WDictionaryWrapper*)parent set:key value:value];
+            [(DotCWDictionaryWrapper*)parent set:key value:value];
         }
         else if(value)
         {
@@ -355,7 +355,7 @@
 
 @end
 
-@interface WPDictionaryWrapper()
+@interface DotCWPDictionaryWrapper()
 {
     NSString*       _persistName;
     BOOL            _dirty;
@@ -363,7 +363,7 @@
 
 @end
 
-@implementation WPDictionaryWrapper
+@implementation DotCWPDictionaryWrapper
 
 - (instancetype) initWithName:(NSString*)name
 {

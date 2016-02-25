@@ -150,8 +150,6 @@ static NSString* subjectToString(id subject)
     // add to _id2Delegators
     [_id2Delegators setObject:delegator forKey:delegatorID];
     
-    NSLog(@"\n%@\n%@", delegatorID, delegator.delegatorID);
-    
     return delegatorID;
 }
 

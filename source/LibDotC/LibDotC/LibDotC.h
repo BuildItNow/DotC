@@ -11,8 +11,6 @@
 
 #import "DotCDefines.h"
 
-#define DOTC_DELEGATE ((DotCDelegate*)[[UIApplication sharedApplication] delegate])
-
 #ifdef __OBJC__
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
@@ -31,6 +29,5 @@
 #import "DotCViewController.h"
 
 #endif
-
 
 #endif /* LibDotC_h */

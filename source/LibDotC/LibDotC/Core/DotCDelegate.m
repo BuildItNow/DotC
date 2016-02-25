@@ -81,21 +81,21 @@ DOTC_IMPL_DELEGATOR_FEATURE_CLASS(__DFCAppDelegate, UIResponder <UIApplicationDe
     return YES;
 }
 
-- (WDictionaryWrapper*) runtimeConfig
+- (DotCWDictionaryWrapper*) runtimeConfig
 {
     if(!_runtimeConfig)
     {
-        _runtimeConfig = STRONG_OBJECT(WDictionaryWrapper, init);
+        _runtimeConfig = STRONG_OBJECT(DotCWDictionaryWrapper, init);
     }
     
     return _runtimeConfig;
 }
 
-- (WPDictionaryWrapper*) persistConfig
+- (DotCWPDictionaryWrapper*) persistConfig
 {
     if(!_persistConfig)
     {
-        _persistConfig = [WPDictionaryWrapper wrapperFromName:@"__PERSIST_CONFIG"];
+        _persistConfig = [DotCWPDictionaryWrapper wrapperFromName:@"__PERSIST_CONFIG"];
         [_persistConfig retain];
     }
     

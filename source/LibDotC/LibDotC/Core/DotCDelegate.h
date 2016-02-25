@@ -6,8 +6,8 @@
 //  Copyright (c) 2014年 BIN. All rights reserved.
 //
 @class DotCJSONConfig;
-@class WDictionaryWrapper;
-@class WPDictionaryWrapper;
+@class DotCWDictionaryWrapper;
+@class DotCWPDictionaryWrapper;
 
 extern NSString*    DOTC_EVENT_VERSION_CHANGED;
 
@@ -18,8 +18,8 @@ DOTC_DECL_DELEGATOR_FEATURE_CLASS(__DFCAppDelegate, UIResponder);
 @property (retain, nonatomic) UIWindow*     window;
 @property (copy, nonatomic) NSString*       appVersion;
 @property (nonatomic, readonly) DotCJSONConfig*          versionConfig;
-@property (nonatomic, readonly) WDictionaryWrapper*  runtimeConfig;
-@property (nonatomic, readonly) WPDictionaryWrapper* persistConfig;
+@property (nonatomic, readonly) DotCWDictionaryWrapper*  runtimeConfig;
+@property (nonatomic, readonly) DotCWPDictionaryWrapper* persistConfig;
 
 @property (nonatomic, readonly) BOOL isInstall; // Install app, Note. Not update app
 
@@ -31,3 +31,6 @@ DOTC_DECL_DELEGATOR_FEATURE_CLASS(__DFCAppDelegate, UIResponder);
 - (void) clearCache:(float)daysAgo;
 - (int)  getCacheSize;
 @end
+
+#define DOTC_APPLICATION [UIApplication sharedApplication]
+#define DOTC_DELEGATE ((DotCDelegate*)[DOTC_APPLICATION delegate])

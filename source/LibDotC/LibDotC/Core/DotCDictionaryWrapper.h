@@ -41,7 +41,7 @@
 
 @end
 
-@interface WDictionaryWrapper : DotCDictionaryWrapper
+@interface DotCWDictionaryWrapper : DotCDictionaryWrapper
 
 - (void) set:(NSString*)name value:(id)value;
 - (void) set:(NSString*)name bool:(BOOL)value;
@@ -53,7 +53,7 @@
 
 @end
 
-@interface WPDictionaryWrapper : WDictionaryWrapper
+@interface DotCWPDictionaryWrapper : DotCWDictionaryWrapper
 
 + (instancetype) wrapperFromName:(NSString*)name;
 

@@ -113,7 +113,6 @@
 		1F594EE51C70315900EFA8A9 /* MJRefreshController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F594CF61C7009E500EFA8A9 /* MJRefreshController.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		731296731A27054400FDE28A /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 731296721A27054400FDE28A /* CFNetwork.framework */; };
 		731296751A27054B00FDE28A /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 731296741A27054B00FDE28A /* Security.framework */; };
-		731296DD1A28092B00FDE28A /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 731296DC1A28092B00FDE28A /* libz.dylib */; };
 		733C76AB19F2183F00282A32 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 733C76AA19F2183F00282A32 /* Foundation.framework */; };
 		733C76B919F2183F00282A32 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 733C76B819F2183F00282A32 /* XCTest.framework */; };
 		733C76BA19F2183F00282A32 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 733C76AA19F2183F00282A32 /* Foundation.framework */; };
@@ -303,7 +302,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				731296DD1A28092B00FDE28A /* libz.dylib in Frameworks */,
 				731296751A27054B00FDE28A /* Security.framework in Frameworks */,
 				731296731A27054400FDE28A /* CFNetwork.framework in Frameworks */,
 				733C76AB19F2183F00282A32 /* Foundation.framework in Frameworks */,
